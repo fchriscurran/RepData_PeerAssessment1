@@ -1,0 +1,87 @@
+Title
+========================================================
+
+install.packages("knitr")
+
+Load the data into R
+```{r echo=TRUE}
+actdata <- read.csv("C:/Users/Chris Curran.ThinkPadCC/Documents/GitHub/RepData_PeerAssessment1/activity.csv")
+```
+
+Clean data in preparation for graphing
+```{r echo = TRUE}
+install.packages("doBy")
+library(doBy)
+actdata_byday <- summaryBy(steps ~ date, FUN=c(mean, median), data=actdata)
+```
+
+
+Create a histogram of the total number of steps taken each day
+```{r fig.width=7, fig.height=6}
+hist(actdata_byday$steps.mean)
+```
+
+Output the mean and median number of steps taken per day
+```{r}
+actdata_byday
+```
+
+Create a dataset collapsed by the mean steps per time interval across days
+```{r}
+actdata_byinterval <- summaryBy(steps ~ interval, FUN=c(mean, median), data=actdata, na.rm = TRUE)
+```
+
+```{r}
+plot(actdata_byinterval$interval, actdata_byinterval$steps.mean, type="l")
+```
+The 835 interval contains the most steps on average.
+
+Counting the number of missing values.
+```{r}
+sum(is.na(actdata$steps))
+```
+
+Replace missing values with the overall mean
+```{r}
+actdata2<-actdata
+actdata2$steps[is.na(actdata2$steps)] <- mean(actdata2$steps, na.rm=TRUE)
+
+actdata2_byday <- summaryBy(steps ~ date, FUN=c(mean, median), data=actdata2)
+```
+
+
+Create a histogram of the total number of steps taken each day without missing values
+```{r fig.width=7, fig.height=6}
+hist(actdata2_byday$steps.mean)
+```
+
+The distribution looks roughly the same with and without the missing variables.
+
+Since I used the overall average to impute, it pulled up the average for some days and pulled down the average for others.
+
+
+Display the mean and median
+```{r echo=TRUE}
+actdata2_byday
+```
+
+
+Create a weekdays measure
+```{r}
+
+actdata2$day <- weekdays(as.Date(actdata2$date, "%Y-%m-%d"))
+actdata2$weekday <- 1
+actdata2$weekday[actdata2$day == "Sunday"] <- 0
+actdata2$weekday[actdata2$day == "Saturday"] <- 0
+actdata2weekday_byinterval <- summaryBy(steps ~ interval, FUN=c(mean, median), data=actdata2[actdata2$weekday ==1,])
+actdata2weekend_byinterval <- summaryBy(steps ~ interval, FUN=c(mean, median), data=actdata2[actdata2$weekday ==0,])
+```
+
+Plot data by weekday status
+```{r}
+par(mfrow=c(2,1)) 
+plot(actdata2weekday_byinterval$interval, actdata2weekday_byinterval$steps.mean, type="l")
+plot(actdata2weekend_byinterval$interval, actdata2weekend_byinterval$steps.mean, type="l")
+```
+
+
